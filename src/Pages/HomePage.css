@@ -1,0 +1,288 @@
+.homepage{
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+   margin-bottom: 25px;
+   margin-top: 100px;
+}
+
+.myparagraph{
+    color:#656B74 ;
+    font-family:Poppins ;
+}
+.myimg{
+    border-radius: 20px;
+}
+.mydiv{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-inline: 100px;
+    margin-top: 60px;
+}
+.image-container {
+  background: #FFDCC8;
+  padding: 20px 30px;
+  border-radius: 25px;
+  display: inline-block;
+  transform: rotate(8deg);     
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  position: relative;
+}
+
+
+.image-container img {
+  transform: rotate(-8deg); 
+  border-radius: 20px;
+}
+.my-btn{
+padding: 10px 20px;
+margin-top: 15px;
+background-color: #E17100;
+border-radius: 10px;
+color: white;
+font-weight: bold;
+display: flex;
+gap: 3px;
+
+}
+.my-btn:hover{
+    transform: scale(1.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.mycard {
+  padding-inline: 50px;
+}
+.card-box {
+  background-color: #FEF0DD;        
+  border-radius: 20px;
+  padding: 20px 25px;
+  width: 150px;
+  height: 170px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+.icon-wrapper {
+  background-color: white;
+  width: 65px;
+  height: 65px;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.myicon{
+  font-size: 45px;
+  color: #E17100;
+}
+.mycard:hover .card-box{
+transform: scale(1.1);
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+.mycard:hover .icon-wrapper{
+     background-color:#F98A22;
+}
+.mycard:hover .myicon{
+      color:white;
+}
+.mycards{
+    display:flex;
+    justify-content:center;
+    align-items: end;
+}
+.header{
+    margin-top: 200px;
+    margin-bottom: 50px;
+}
+.extrainfo{
+  margin-top: 250px;
+  margin-bottom: 150px;
+   padding-inline: 100px;
+
+}
+.icon-wrap{
+  background-color: #FEE3C1;
+  width: 100px;
+  height: 100px;
+ border-radius: 15px;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.myfooter{
+  margin-top: 100px;
+  background-color: black;
+ 
+  padding-inline:250px;
+  padding-bottom: 50px;
+}
+.footer-wrap{
+  background-color:#F98724;
+  width: 40px;
+  height: 40px;
+ border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.link-wrapper{
+  background-color:#313131;
+  width: 40px;
+  height: 40px;
+ border-radius: 15px;
+  padding: 10px;
+  display: flex;
+  
+}
+.link-wrapper:hover{
+  background-color: #F98724;
+}
+.myfooter-div{
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/*Responsivness*/
+@media (max-width: 639px) {
+
+  .mydiv {
+    flex-direction: column;
+    padding-inline: 20px;
+    margin-top: 50px;
+  }
+
+  .image-container {
+    transform: rotate(0deg);
+    padding: 15px;
+  }
+
+  .myimg {
+    width: 100%;
+    height: auto;
+  }
+
+  .mycards {
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    padding-inline: 10px;
+  }
+
+  .card-box {
+    width: 200px;
+    height: 200px;
+    max-width: 250px;
+    
+  }
+
+  .extrainfo {
+    padding-inline: 20px;
+    margin-top: 150px;
+    margin-bottom: 100px;
+  }
+
+  .parts {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .icon-wrap {
+    width: 80px;
+    height: 80px;
+  }
+
+}
+
+
+@media (min-width: 640px) and (max-width: 1023px) {
+
+  .mydiv {
+    flex-direction: column;
+    padding-inline: 40px;
+  }
+
+  .image-container {
+    transform: rotate(5deg);
+    padding: 20px;
+  }
+
+  .mycards {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .card-box {
+    width: 140px;
+    height: 140px;
+  }
+
+  .extrainfo {
+    padding-inline: 50px;
+    margin-top: 200px;
+    margin-bottom: 100px;
+  }
+
+  .parts {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+  }
+
+  .icon-wrap {
+    width: 90px;
+    height: 90px;
+  }
+}
+@media (max-width: 639px) {
+
+  .myfooter {
+    padding-inline: 30px;
+  }
+
+  .myfooter-div {
+    display: flex;
+    flex-direction: column;   
+    align-items: flex-start;  
+    text-align: left;
+    gap: 20px;
+  }
+
+  .icons {
+    justify-content: flex-start;
+  }
+
+  .contact-box {
+    margin-top: 10px;        
+  }
+}
+
+
+@media (min-width: 640px) and (max-width: 1023px) {
+
+  .myfooter {
+    padding-inline: 80px;
+  }
+
+  .myfooter-div {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 40px;
+  }
+
+  .contact-box {
+    margin-top: 20px;
+  }
+}
+

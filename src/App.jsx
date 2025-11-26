@@ -4,7 +4,6 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import MainLayout from './Layouts/MainLayout'
 import Homepage from './Pages/Homepage'
 import Profile from './Pages/Profile'
-import PostDetails from './Pages/PostDetails'
 import NotFound from './Pages/NotFound'
 import AuthLayout from './Layouts/AuthLayout'
 import Login from './Pages/Login'
@@ -16,7 +15,7 @@ function App() {
     {path:'', element: <MainLayout/> , children:[
       {index:true , element:  <Homepage/>},
       {path:'profile' , element: <Profile/>},
-      {path:'postdetails', element:<PostDetails/>},
+      {path:'Orders' , element: <Orders/>},
       {path:'*', element:<NotFound/>}],
     },{path:'', element: <AuthLayout/> , children:[
       {path:'login', element:<AuthProtectedRoute><Login/></AuthProtectedRoute>},

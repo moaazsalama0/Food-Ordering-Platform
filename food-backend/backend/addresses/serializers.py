@@ -11,6 +11,6 @@ class AddressSerializer(serializers.ModelSerializer):
             'street',
             'building_number',
             'floor',
-            'apartment',
+            'apartment_number',
         ]
         read_only_fields = ['id']

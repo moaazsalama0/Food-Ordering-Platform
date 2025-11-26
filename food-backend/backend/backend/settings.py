@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
     # Our apps
     'users',
+    'addresses',
 
 ]
 
@@ -87,6 +88,7 @@ DATABASES = {
         'PORT': '5432',
         'USER': 'postgres',
         'PASSWORD': 'Ahmed@2006'
+
     }
 }
 

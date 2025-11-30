@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class Category(models.Model):
     name = models.CharField(max_length=50)      
@@ -29,5 +31,28 @@ class Dish(models.Model):
 
     def __str__(self):
         return self.name
+    
 
+#  REVIEW TABLE
+from django.core.validators import MinValueValidator, MaxValueValidator
+
+
+class Review(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    dish = models.ForeignKey(
+        Dish,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )  # range 1–5
+    comment = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.user} → {self.dish} ({self.rating})"
 # Create your models here.

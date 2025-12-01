@@ -10,6 +10,10 @@ import Login from './Pages/Login'
 import Register from './Pages/Register'
 import ProtectedRoute from './Components/ProtectedRoute'
 import AuthProtectedRoute from './Components/AuthProtectedRoute'
+import Orders from './Pages/Orders'
+import Cart from './Pages/cart'
+import Checkout from './Pages/Checkout'
+import Menu from './Pages/Menu'
 function App() {
   const routers= createBrowserRouter([
     {path:'', element: <MainLayout/> , children:[

@@ -25,7 +25,7 @@ export default function Homepage() {
       
       <h1 className='text-6xl font-bold homepage'>Delicious Food <span className='text-amber-600 '>Delivered Fast </span></h1>
       <p className='myparagraph text-md'>Order your favorite meals from the best restaurants in town.<br/> Fresh ingredients, quick delivery, and amazing taste guaranteed.</p>
-      <button className='my-btn'>Order Now <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+      <button className='my-btn'> <a href="/menu">Order Now</a> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
 </svg>
  </button>

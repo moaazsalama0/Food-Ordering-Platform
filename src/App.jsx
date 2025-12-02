@@ -10,6 +10,14 @@ import Login from './Pages/Login'
 import Register from './Pages/Register'
 import ProtectedRoute from './Components/ProtectedRoute'
 import AuthProtectedRoute from './Components/AuthProtectedRoute'
+import AdminLayout from './Layouts/AdminLayout'
+import AddDish from './admin/pages/AddDish'
+import EditDish from './admin/pages/EditDish'
+import Orders from './admin/pages/Orders'
+import UpdateOrderStatus from './admin/pages/UpdateOrderStatus'
+import UploadMealImages from './admin/pages/UploadMealImages'
+import RatingStatistics from './admin/pages/RatingStatistics'
+
 function App() {
   const routers= createBrowserRouter([
     {path:'', element: <MainLayout/> , children:[
@@ -22,6 +30,16 @@ function App() {
       {path:'register', element:<AuthProtectedRoute><Register/></AuthProtectedRoute>}
     ]
 
+    },
+    {
+    path: 'admin',  element: <AdminLayout />, children: [
+    { path: 'add-dish', element: <AddDish /> },
+    { path: 'edit-dish/:id', element: <EditDish /> },
+    { path: 'orders', element: <Orders /> },
+    { path: 'order/:id', element: <UpdateOrderStatus /> },
+    { path: 'upload-image', element: <UploadMealImages /> },
+    { path: 'ratings', element: <RatingStatistics /> }
+    ]
     }
   ])
 

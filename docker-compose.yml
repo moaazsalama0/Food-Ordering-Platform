@@ -1,10 +1,13 @@
+# docker-compose.yml
+version: '3.8'
+
 services:
   db:
     image: postgres:15
     environment:
       POSTGRES_DB: food_ordering
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Ahmed@2006}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/FoodOrderDB.sql:/docker-entrypoint-initdb.d/init.sql
@@ -23,7 +26,7 @@ services:
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
-             gunicorn backend.wsgi:application --bind 0.0.0.0:8000"
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./food-backend:/app
       - static_volume:/app/staticfiles
@@ -37,17 +40,26 @@ services:
         condition: service_healthy
     environment:
       - DB_HOST=db
+      - DB_NAME=food_ordering
+      - DB_USER=postgres
+      - DB_PASSWORD=${DB_PASSWORD:-Ahmed@2006}
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=backend.settings
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - "3000:3000"
     depends_on:
       - backend
     environment:
-      - VITE_API_BASE_URL=http://localhost:8000/api
+      - REACT_APP_API_URL=http://localhost:8000/api
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
 volumes:
   postgres_data:

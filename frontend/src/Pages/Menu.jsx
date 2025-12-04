@@ -1,66 +1,61 @@
 import React, { useEffect, useState } from "react";
 import "./Menu.css";
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
-import mockData from "../Services/mockMenuData";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchMenu } from "../redux/services/menuSlice";
+import { addToCart } from "../redux/services/cartSlice";
 
 export default function Menu() {
-  const [items, setItems] = useState([]);
-  const [filtered, setFiltered] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const dispatch = useDispatch();
+
+  const { items, loading } = useSelector((state) => state.menu);
+  const cartCount = useSelector((state) =>
+    state.cart.items.reduce((sum, i) => sum + i.quantity, 0)
+  );
+
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [cartCount, setCartCount] = useState(0);
 
+  // Load menu from API
   useEffect(() => {
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    setCartCount(cart.reduce((sum, item) => sum + item.qty, 0));
-  }, []);
+    dispatch(fetchMenu());
+  }, [dispatch]);
 
-  useEffect(() => {
-    setItems(mockData);
-    setFiltered(mockData);
+  // Prevent crash until data exists
+  const safeItems = Array.isArray(items) ? items : [];
 
-    const uniqueCats = ["All", ...new Set(mockData.map((i) => i.category))];
-    setCategories(uniqueCats);
-  }, []);
+  // Extract categories safely
+  const categories = [
+    "All",
+    ...new Set(safeItems.map((i) => i.category_name || "Unknown")),
+  ];
 
+  // Filtering logic
+  const filtered = safeItems.filter((item) => {
+    const matchesCategory =
+      selectedCategory === "All" ||
+      item.category_name === selectedCategory;
 
-  useEffect(() => {
-    let list = items;
+    const matchesSearch = item.name
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
 
-    if (selectedCategory !== "All") {
-      list = list.filter((i) => i.category === selectedCategory);
-    }
+    return matchesCategory && matchesSearch;
+  });
 
-    if (search.trim() !== "") {
-      list = list.filter((i) =>
-        i.name.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    setFiltered(list);
-  }, [search, selectedCategory]);
-
-
-  const addToCart = (item) => {
-    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-
-    const exists = cart.find((p) => p.id === item.id);
-    if (exists) {
-      exists.qty += 1;
-    } else {
-      cart.push({ ...item, qty: 1 });
-    }
-
-    localStorage.setItem("cart", JSON.stringify(cart));
-    setCartCount(cart.reduce((sum, i) => sum + i.qty, 0));
+  const handleAddToCart = (item) => {
+    dispatch(addToCart(item));
   };
+
+  if (loading) {
+    return <p className="text-center mt-20 text-xl">Loading menu…</p>;
+  }
 
   return (
     <div className="menu-wrapper mt-24 px-4 pb-90">
 
-   
-      <div className="sticky top-16 z-30  pb-3 pt-3">
+      {/* Search Box */}
+      <div className="sticky top-16 z-30 pb-3 pt-3">
         <input
           type="text"
           placeholder="Search food…"
@@ -69,7 +64,7 @@ export default function Menu() {
           className="w-full p-3 rounded-xl bg-white text-black shadow-md outline-none"
         />
 
-    
+        {/* Categories */}
         <div className="flex gap-2 overflow-x-auto mt-3 pb-1">
           {categories.map((cat) => (
             <button
@@ -87,7 +82,7 @@ export default function Menu() {
         </div>
       </div>
 
- 
+      {/* Menu Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
         {filtered.map((item) => (
           <div
@@ -108,7 +103,7 @@ export default function Menu() {
 
               <button
                 className="w-full mt-3 bg-amber-600 text-white font-semibold py-2 rounded-xl active:scale-[.97] transition"
-                onClick={() => addToCart(item)}
+                onClick={() => handleAddToCart(item)}
               >
                 Add
               </button>
@@ -117,7 +112,7 @@ export default function Menu() {
         ))}
       </div>
 
-     
+      {/* Cart Button */}
       <a
         href="/cart"
         className="fixed bottom-6 right-5 bg-amber-600 text-white rounded-full w-[60px] h-[60px] flex items-center justify-center shadow-xl"

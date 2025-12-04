@@ -17,6 +17,8 @@ import Orders from './admin/pages/Orders'
 import UpdateOrderStatus from './admin/pages/UpdateOrderStatus'
 import UploadMealImages from './admin/pages/UploadMealImages'
 import RatingStatistics from './admin/pages/RatingStatistics'
+import Menu from './Pages/Menu'
+import Cart from './Pages/cart'
 
 function App() {
   const routers= createBrowserRouter([
@@ -24,22 +26,15 @@ function App() {
       {index:true , element:  <Homepage/>},
       {path:'profile' , element: <Profile/>},
       {path:'Orders' , element: <Orders/>},
-      {path:'*', element:<NotFound/>}],
+      {path:'*', element:<NotFound/>},
+      {path:'menu', element:<Menu/>},
+      {path:'cart', element:<Cart/>}],
+
     },{path:'', element: <AuthLayout/> , children:[
       {path:'login', element:<AuthProtectedRoute><Login/></AuthProtectedRoute>},
       {path:'register', element:<AuthProtectedRoute><Register/></AuthProtectedRoute>}
     ]
 
-    },
-    {
-    path: 'admin',  element: <AdminLayout />, children: [
-    { path: 'add-dish', element: <AddDish /> },
-    { path: 'edit-dish/:id', element: <EditDish /> },
-    { path: 'orders', element: <Orders /> },
-    { path: 'order/:id', element: <UpdateOrderStatus /> },
-    { path: 'upload-image', element: <UploadMealImages /> },
-    { path: 'ratings', element: <RatingStatistics /> }
-    ]
     }
   ])
 

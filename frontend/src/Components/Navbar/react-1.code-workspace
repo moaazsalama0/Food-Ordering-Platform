@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../React assignment 1/react-1"
+		},
+		{
+			"path": "../../.."
+		},
+		{
+			"path": "../../../../../Rodycss"
+		},
+		{
+			"path": "../../../../../projects/fokir assignment"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "react-1"
+	}
+}

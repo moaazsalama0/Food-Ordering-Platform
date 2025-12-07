@@ -22,13 +22,17 @@ const cartSlice = createSlice({
       if (exist) {
         exist.quantity += 1;
       } else {
-        state.items.push({ 
+        state.items.push({
           id: item.id,
           name: item.name,
           price: item.price,
           quantity: 1,
-          image: item.img,
-          category: item.category_name || "Food",
+
+          // 💡 Support multiple backend formats
+          image: item.image || item.img || "/default-food.jpg",
+
+          // 💡 categoryId from DB OR string category OR fallback
+          category: item.category || item.category_name || item.categoryId || "Food",
         });
       }
 

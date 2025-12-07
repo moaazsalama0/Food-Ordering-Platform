@@ -2,13 +2,14 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const { sequelize, testConnection } = require('./config/db');
+const pool = require('./config/database');
 
 const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173'
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true
 }));
 app.use(express.json());
 
@@ -18,15 +19,14 @@ const menuRoutes = require('./routes/menu');
 const cartRoutes = require('./routes/cart');
 const orderRoutes = require('./routes/orders');
 const userRoutes = require('./routes/users');
-const paymentRoutes = require('./routes/payments');
 
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
+app.use('/api/dishes', menuRoutes); // Add alias for frontend compatibility
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/payments', paymentRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -36,42 +36,76 @@ app.get('/', (req, res) => {
     database: 'PostgreSQL',
     endpoints: {
       auth: '/api/auth/*',
-      menu: '/api/menu/*',
+      menu: '/api/menu/* or /api/dishes/*',
       cart: '/api/cart/*',
       orders: '/api/orders/*',
-      users: '/api/users/*',
-      payments: '/api/payments/*'
+      users: '/api/users/*'
     }
   });
 });
 
-// Connect to database and start server
+// Health check endpoint
+app.get('/api/health', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*) FROM dish');
+    res.json({
+      status: 'OK',
+      database: 'Connected',
+      dishes_count: result.rows[0].count,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      database: 'Disconnected',
+      error: error.message
+    });
+  }
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`
+  });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal server error'
+  });
+});
+
+// Start server
+const PORT = process.env.PORT || 5000;
+
 const startServer = async () => {
   try {
     // Test database connection
-    const connected = await testConnection();
-    if (!connected) {
-      console.error('❌ Database connection failed. Exiting...');
-      process.exit(1);
-    }
+    await pool.query('SELECT NOW()');
+    console.log('✅ Database connected successfully');
 
-    // Sync models (in development)
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: true });
-      console.log('✅ Database models synced');
-    }
-
-    const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`🚀 Backend running on port ${PORT}`);
-      console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-      console.log(`🔗 CORS enabled for: ${process.env.FRONTEND_URL}`);
+      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔗 CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
       console.log(`🗄️ Database: PostgreSQL (${process.env.DB_NAME})`);
+      console.log(`\n📍 API Endpoints:`);
+      console.log(`   - Health: http://localhost:${PORT}/api/health`);
+      console.log(`   - Menu: http://localhost:${PORT}/api/menu`);
+      console.log(`   - Dishes: http://localhost:${PORT}/api/dishes`);
     });
   } catch (error) {
-    console.error('❌ Server startup failed:', error);
+    console.error('❌ Database connection failed:', error.message);
+    console.error('Full error:', error);
     process.exit(1);
   }
 };
 
 startServer();
+
+module.exports = app;

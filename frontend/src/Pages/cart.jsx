@@ -6,38 +6,94 @@ import './Cart.css';
 
 export default function Cart() {
   const navigate = useNavigate();
+
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [cartItems, setCartItems] = useState([]);
 
-  // --- FIX 1: Load cart from LocalStorage ---
+  const [cartItems, setCartItems] = useState([]);
+  const [totals, setTotals] = useState({
+    subtotal: 0,
+    discount: 0,
+    deliveryFee: 0,
+    tax: 0,
+    total: 0
+  });
+
+  // Load cart from localStorage
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("cart") || "[]");
 
-    // Convert your menu item structure → cart page structure
     const formatted = saved.map(item => ({
       id: item.id,
       name: item.name,
       price: item.price,
-      quantity: item.qty,        // menu uses qty, your cart uses quantity
-      image: item.img,           // your mock items use image, menu uses img
+      quantity: item.quantity || item.qty || 1,
+      image: item.image || item.img,
       category: item.category || "Food"
     }));
 
     setCartItems(formatted);
   }, []);
 
-  // --- FIX 2: Save updated cart back to localStorage ---
   const syncToLocalStorage = (items) => {
     const formatted = items.map(item => ({
       id: item.id,
       name: item.name,
       price: item.price,
-      qty: item.quantity, // back to menu format
-      img: item.image,
-      category: item.category
+      quantity: item.quantity,
+      image: item.image,
+      category: item.category,
     }));
     localStorage.setItem("cart", JSON.stringify(formatted));
+  };
+
+  // -------------------------------
+  // 🔹 API: Update Cart Totals
+  // -------------------------------
+  const updateTotalsFromApi = async (items, coupon = null) => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/cart/calculate-totals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map(i => ({ itemId: i.id, quantity: i.quantity })),
+          couponCode: coupon || undefined
+        })
+      });
+
+      const data = await res.json();
+
+      setTotals({
+        subtotal: data.subtotal,
+        discount: data.discount,
+        deliveryFee: data.deliveryFee,
+        tax: data.tax,
+        total: data.total
+      });
+
+    } catch (err) {
+      console.error("Failed to calculate totals:", err);
+    }
+  };
+
+  // Call totals calculator whenever cart changes
+  useEffect(() => {
+    updateTotalsFromApi(cartItems, appliedCoupon?.code || null);
+  }, [cartItems, appliedCoupon]);
+
+  // -------------------------------
+  // 🔹 API: Add / Update cart item
+  // -------------------------------
+  const sendUpdateToBackend = async (itemId, quantity) => {
+    try {
+      await fetch("http://127.0.0.1:8000/api/cart/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId, quantity })
+      });
+    } catch (err) {
+      console.error("Cart update failed:", err);
+    }
   };
 
   const updateQuantity = (id, newQuantity) => {
@@ -49,21 +105,24 @@ export default function Cart() {
 
     setCartItems(updated);
     syncToLocalStorage(updated);
+    sendUpdateToBackend(id, newQuantity);
   };
 
   const removeItem = (id) => {
     const updated = cartItems.filter(item => item.id !== id);
     setCartItems(updated);
     syncToLocalStorage(updated);
+    sendUpdateToBackend(id, 0); // remove from backend
   };
 
+  // -------------------------------
+  // 🔹 Coupon Handling
+  // -------------------------------
   const applyCoupon = () => {
     if (couponCode === 'FOOD10') {
       setAppliedCoupon({ code: 'FOOD10', discount: 10 });
-      alert('Coupon applied! 10% discount');
     } else if (couponCode === 'SAVE20') {
       setAppliedCoupon({ code: 'SAVE20', discount: 20 });
-      alert('Coupon applied! 20% discount');
     } else {
       alert('Invalid coupon code');
     }
@@ -74,21 +133,17 @@ export default function Cart() {
     setCouponCode('');
   };
 
-  // Pricing calculations
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const discount = appliedCoupon ? (subtotal * appliedCoupon.discount) / 100 : 0;
-  const deliveryFee = subtotal > 50 ? 0 : 5.99;
-  const tax = (subtotal - discount) * 0.08;
-  const total = subtotal - discount + deliveryFee + tax;
-
   const handleCheckout = () => {
     if (cartItems.length === 0) {
       alert('Your cart is empty!');
       return;
     }
 
-    navigate('/checkout', { 
-      state: { cartItems, total, subtotal, discount, deliveryFee, tax }
+    navigate('/checkout', {
+      state: {
+        cartItems,
+        ...totals
+      }
     });
   };
 
@@ -107,11 +162,7 @@ export default function Cart() {
             <CardBody>
               <FaShoppingCart className="empty-cart-icon" />
               <h3 className="text-2xl font-bold text-gray-700">Your cart is empty</h3>
-              <p className="text-gray-500 mb-4">Add some delicious food to get started!</p>
-              <Button 
-                className="bg-amber-600 text-white hover:bg-amber-700"
-                onClick={() => navigate('/menu')}
-              >
+              <Button className="bg-amber-600 text-white" onClick={() => navigate('/menu')}>
                 Browse Menu
               </Button>
             </CardBody>
@@ -126,7 +177,7 @@ export default function Cart() {
                   <CardBody>
                     <div className="cart-item">
                       <img src={item.image} alt={item.name} className="item-image" />
-                      
+
                       <div className="item-details">
                         <h3 className="item-name">{item.name}</h3>
                         <p className="item-category">{item.category}</p>
@@ -135,36 +186,21 @@ export default function Cart() {
 
                       <div className="item-actions">
                         <div className="quantity-controls">
-                          <Button
-                            size="sm"
-                            isIconOnly
-                            className="quantity-btn"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          >
+                          <Button onClick={() => updateQuantity(item.id, item.quantity - 1)}>
                             <FaMinus />
                           </Button>
                           <span className="quantity-display">{item.quantity}</span>
-                          <Button
-                            size="sm"
-                            isIconOnly
-                            className="quantity-btn"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          >
+                          <Button onClick={() => updateQuantity(item.id, item.quantity + 1)}>
                             <FaPlus />
                           </Button>
                         </div>
-                        
+
                         <div className="item-total">
-                          <span className="total-label">Total:</span>
-                          <span className="total-price">${(item.price * item.quantity).toFixed(2)}</span>
+                          <span>Total:</span>
+                          <span>${(item.price * item.quantity).toFixed(2)}</span>
                         </div>
 
-                        <Button
-                          size="sm"
-                          isIconOnly
-                          className="remove-btn"
-                          onClick={() => removeItem(item.id)}
-                        >
+                        <Button className="remove-btn" onClick={() => removeItem(item.id)}>
                           <FaTrash />
                         </Button>
                       </div>
@@ -182,84 +218,68 @@ export default function Cart() {
 
                   {/* Coupon */}
                   <div className="coupon-section">
-                    <div className="coupon-input-wrapper">
-                      <Input
-                        placeholder="Enter coupon code"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        variant="bordered"
-                        startContent={<FaTag className="text-amber-600" />}
-                        disabled={appliedCoupon !== null}
-                      />
-                      {appliedCoupon ? (
-                        <Button
-                          className="bg-red-600 text-white hover:bg-red-700"
-                          onClick={removeCoupon}
-                        >
-                          Remove
-                        </Button>
-                      ) : (
-                        <Button
-                          className="bg-amber-600 text-white hover:bg-amber-700"
-                          onClick={applyCoupon}
-                        >
-                          Apply
-                        </Button>
-                      )}
-                    </div>
+                    <Input
+                      placeholder="Enter coupon code"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      startContent={<FaTag />}
+                      disabled={appliedCoupon !== null}
+                    />
+                    {appliedCoupon ? (
+                      <Button className="bg-red-600 text-white" onClick={removeCoupon}>
+                        Remove
+                      </Button>
+                    ) : (
+                      <Button className="bg-amber-600 text-white" onClick={applyCoupon}>
+                        Apply
+                      </Button>
+                    )}
                   </div>
 
                   {/* Prices */}
                   <div className="price-breakdown">
                     <div className="price-row">
                       <span>Subtotal:</span>
-                      <span>${subtotal.toFixed(2)}</span>
+                      <span>${totals.subtotal.toFixed(2)}</span>
                     </div>
 
-                    {discount > 0 && (
+                    {totals.discount > 0 && (
                       <div className="price-row discount">
                         <span>Discount:</span>
-                        <span>-${discount.toFixed(2)}</span>
+                        <span>-${totals.discount.toFixed(2)}</span>
                       </div>
                     )}
 
                     <div className="price-row">
                       <span>Delivery Fee:</span>
-                      <span>{deliveryFee === 0 ? "FREE" : `$${deliveryFee.toFixed(2)}`}</span>
+                      <span>{totals.deliveryFee === 0 ? "FREE" : `$${totals.deliveryFee.toFixed(2)}`}</span>
                     </div>
 
                     <div className="price-row">
                       <span>Tax (8%):</span>
-                      <span>${tax.toFixed(2)}</span>
+                      <span>${totals.tax.toFixed(2)}</span>
                     </div>
 
                     <div className="price-row total">
-                      <span className="font-bold text-lg">Total:</span>
-                      <span className="font-bold text-2xl text-amber-600">
-                        ${total.toFixed(2)}
+                      <span>Total:</span>
+                      <span className="text-amber-600 font-bold text-2xl">
+                        ${totals.total.toFixed(2)}
                       </span>
                     </div>
                   </div>
 
-                  <Button
-                    className="checkout-btn bg-amber-600 text-white hover:bg-amber-700"
-                    size="lg"
-                    onClick={handleCheckout}
-                  >
+                  <Button className="bg-amber-600 text-white" size="lg" onClick={handleCheckout}>
                     Proceed to Checkout
                   </Button>
 
-                  <Button
-                    variant="bordered"
-                    className="continue-shopping-btn"
-                    onClick={() => navigate('/menu')}
-                  >
+                  <Button variant="bordered" onClick={() => navigate('/menu')}>
                     Continue Shopping
                   </Button>
 
                 </CardBody>
               </Card>
             </div>
+
           </div>
         )}
       </div>

@@ -19,6 +19,7 @@ import UploadMealImages from './admin/pages/UploadMealImages'
 import RatingStatistics from './admin/pages/RatingStatistics'
 import Menu from './Pages/Menu'
 import Cart from './Pages/cart'
+import Checkout from './Pages/Checkout' 
 
 function App() {
   const routers= createBrowserRouter([
@@ -28,7 +29,9 @@ function App() {
       {path:'Orders' , element: <Orders/>},
       {path:'*', element:<NotFound/>},
       {path:'menu', element:<Menu/>},
-      {path:'cart', element:<Cart/>}],
+      {path:'cart', element:<Cart/>},
+      {path:'checkout', element:<Checkout/>}],
+  
 
     },{path:'', element: <AuthLayout/> , children:[
       {path:'login', element:<AuthProtectedRoute><Login/></AuthProtectedRoute>},

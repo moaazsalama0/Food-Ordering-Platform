@@ -2,48 +2,27 @@ const pool = require('../config/database');
 
 class MenuItem {
   constructor(data) {
-    this.id = data.id;
-    this.name = data.name;
-    this.description = data.description;
-    this.price = data.price;
-    this.image = data.image;
+    // Map SQL columns to expected frontend format
+    this.id = data.dish_id;
+    this.name = data.dish_name;
+    this.description = data.dish_description;
+    this.price = parseFloat(data.price);
+    this.img = data.img; // Frontend expects 'img' not 'image'
     this.category_id = data.category_id;
     this.category_name = data.category_name;
     this.is_available = data.is_available;
-    this.preparation_time = data.preparation_time;
-    this.calories = data.calories;
-    this.allergens = data.allergens;
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
-  }
-
-  // Create new menu item
-  static async create(itemData) {
-    const { name, description, price, image, categoryId, preparationTime, calories, allergens } = itemData;
-    
-    const query = `
-      INSERT INTO menu_items (name, description, price, image, category_id, preparation_time, calories, allergens)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *, 
-        (SELECT name FROM categories WHERE id = $5) as category_name
-    `;
-    
-    const values = [
-      name, description, price, image, categoryId, 
-      preparationTime, calories, allergens
-    ];
-    
-    const result = await pool.query(query, values);
-    return new MenuItem(result.rows[0]);
   }
 
   // Get all menu items with filtering
   static async findAll(filters = {}) {
     let query = `
-      SELECT mi.*, c.name as category_name
-      FROM menu_items mi
-      LEFT JOIN categories c ON mi.category_id = c.id
-      WHERE mi.is_available = true
+      SELECT d.dish_id, d.dish_name, d.dish_description, d.price, d.img, 
+             d.category_id, d.is_available, c.category_name
+      FROM dish d
+      LEFT JOIN category c ON d.category_id = c.category_id
+      WHERE d.is_available = true
     `;
     
     const values = [];
@@ -52,97 +31,142 @@ class MenuItem {
     // Add category filter
     if (filters.category && filters.category !== 'All') {
       paramCount++;
-      query += ` AND c.name = $${paramCount}`;
+      query += ` AND c.category_name = $${paramCount}`;
       values.push(filters.category);
     }
 
     // Add search filter
     if (filters.search) {
       paramCount++;
-      query += ` AND (mi.name ILIKE $${paramCount} OR mi.description ILIKE $${paramCount})`;
+      query += ` AND (d.dish_name ILIKE $${paramCount} OR d.dish_description ILIKE $${paramCount})`;
       values.push(`%${filters.search}%`);
     }
 
     // Add price range filter
     if (filters.minPrice) {
       paramCount++;
-      query += ` AND mi.price >= $${paramCount}`;
+      query += ` AND d.price >= $${paramCount}`;
       values.push(filters.minPrice);
     }
 
     if (filters.maxPrice) {
       paramCount++;
-      query += ` AND mi.price <= $${paramCount}`;
+      query += ` AND d.price <= $${paramCount}`;
       values.push(filters.maxPrice);
     }
 
-    query += ` ORDER BY mi.created_at DESC`;
+    query += ` ORDER BY d.dish_id`;
 
-    const result = await pool.query(query, values);
-    return result.rows.map(row => new MenuItem(row));
+    try {
+      const result = await pool.query(query, values);
+      return result.rows.map(row => new MenuItem(row));
+    } catch (error) {
+      console.error('Database query error:', error);
+      throw error;
+    }
   }
 
   // Get menu item by ID
   static async findById(id) {
     const query = `
-      SELECT mi.*, c.name as category_name
-      FROM menu_items mi
-      LEFT JOIN categories c ON mi.category_id = c.id
-      WHERE mi.id = $1
+      SELECT d.dish_id, d.dish_name, d.dish_description, d.price, d.img,
+             d.category_id, d.is_available, c.category_name
+      FROM dish d
+      LEFT JOIN category c ON d.category_id = c.category_id
+      WHERE d.dish_id = $1
     `;
     
-    const result = await pool.query(query, [id]);
+    try {
+      const result = await pool.query(query, [id]);
+      
+      if (result.rows.length === 0) return null;
+      return new MenuItem(result.rows[0]);
+    } catch (error) {
+      console.error('Database query error:', error);
+      throw error;
+    }
+  }
+
+  // Create new menu item
+  static async create(itemData) {
+    const { name, description, price, image, categoryId } = itemData;
     
-    if (result.rows.length === 0) return null;
-    return new MenuItem(result.rows[0]);
+    const query = `
+      INSERT INTO dish (category_id, dish_name, dish_description, price, img, is_available)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING dish_id, dish_name, dish_description, price, img, category_id, is_available,
+        (SELECT category_name FROM category WHERE category_id = $1) as category_name
+    `;
+    
+    const values = [categoryId, name, description, price, image, true];
+    
+    try {
+      const result = await pool.query(query, values);
+      return new MenuItem(result.rows[0]);
+    } catch (error) {
+      console.error('Database insert error:', error);
+      throw error;
+    }
   }
 
   // Update menu item
   static async update(id, updateData) {
-    const { name, description, price, image, categoryId, preparationTime, calories, allergens, isAvailable } = updateData;
+    const { name, description, price, image, categoryId, isAvailable } = updateData;
     
     const query = `
-      UPDATE menu_items 
-      SET name = $1, description = $2, price = $3, image = $4, 
-          category_id = $5, preparation_time = $6, calories = $7, 
-          allergens = $8, is_available = $9, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $10
-      RETURNING *, 
-        (SELECT name FROM categories WHERE id = $5) as category_name
+      UPDATE dish 
+      SET dish_name = $1, dish_description = $2, price = $3, img = $4, 
+          category_id = $5, is_available = $6
+      WHERE dish_id = $7
+      RETURNING dish_id, dish_name, dish_description, price, img, category_id, is_available,
+        (SELECT category_name FROM category WHERE category_id = $5) as category_name
     `;
     
-    const values = [
-      name, description, price, image, categoryId,
-      preparationTime, calories, allergens, isAvailable, id
-    ];
+    const values = [name, description, price, image, categoryId, isAvailable !== undefined ? isAvailable : true, id];
     
-    const result = await pool.query(query, values);
-    
-    if (result.rows.length === 0) return null;
-    return new MenuItem(result.rows[0]);
+    try {
+      const result = await pool.query(query, values);
+      
+      if (result.rows.length === 0) return null;
+      return new MenuItem(result.rows[0]);
+    } catch (error) {
+      console.error('Database update error:', error);
+      throw error;
+    }
   }
 
   // Delete menu item
   static async delete(id) {
-    const query = 'DELETE FROM menu_items WHERE id = $1 RETURNING id';
-    const result = await pool.query(query, [id]);
+    const query = 'DELETE FROM dish WHERE dish_id = $1 RETURNING dish_id';
     
-    return result.rows.length > 0;
+    try {
+      const result = await pool.query(query, [id]);
+      return result.rows.length > 0;
+    } catch (error) {
+      console.error('Database delete error:', error);
+      throw error;
+    }
   }
 
   // Toggle availability
   static async toggleAvailability(id) {
     const query = `
-      UPDATE menu_items 
-      SET is_available = NOT is_available, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1
-      RETURNING *
+      UPDATE dish 
+      SET is_available = NOT is_available
+      WHERE dish_id = $1
+      RETURNING dish_id, dish_name, dish_description, price, img, 
+                category_id, is_available
     `;
     
-    const result = await pool.query(query, [id]);
-    
-    if (result.rows.length === 0) return null;
-    return new MenuItem(result.rows[0]);
+    try {
+      const result = await pool.query(query, [id]);
+      
+      if (result.rows.length === 0) return null;
+      return new MenuItem(result.rows[0]);
+    } catch (error) {
+      console.error('Database update error:', error);
+      throw error;
+    }
   }
 
   // Get menu statistics
@@ -154,26 +178,37 @@ class MenuItem {
         AVG(price) as avg_price,
         MIN(price) as min_price,
         MAX(price) as max_price,
-        (SELECT COUNT(*) FROM categories) as total_categories
-      FROM menu_items
+        (SELECT COUNT(*) FROM category) as total_categories
+      FROM dish
     `;
     
-    const result = await pool.query(query);
-    return result.rows[0];
+    try {
+      const result = await pool.query(query);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Database query error:', error);
+      throw error;
+    }
   }
 
   // Get items by category
   static async findByCategory(categoryId) {
     const query = `
-      SELECT mi.*, c.name as category_name
-      FROM menu_items mi
-      LEFT JOIN categories c ON mi.category_id = c.id
-      WHERE mi.category_id = $1 AND mi.is_available = true
-      ORDER BY mi.created_at DESC
+      SELECT d.dish_id, d.dish_name, d.dish_description, d.price, d.img,
+             d.category_id, d.is_available, c.category_name
+      FROM dish d
+      LEFT JOIN category c ON d.category_id = c.category_id
+      WHERE d.category_id = $1 AND d.is_available = true
+      ORDER BY d.dish_id
     `;
     
-    const result = await pool.query(query, [categoryId]);
-    return result.rows.map(row => new MenuItem(row));
+    try {
+      const result = await pool.query(query, [categoryId]);
+      return result.rows.map(row => new MenuItem(row));
+    } catch (error) {
+      console.error('Database query error:', error);
+      throw error;
+    }
   }
 }
 

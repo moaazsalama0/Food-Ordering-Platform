@@ -52,11 +52,12 @@ router.post('/register', registerValidation, async (req, res) => {
       });
     }
 
-    // Create new user
+    // Create new user (User.create now only accepts name, email, password)
     const user = await User.create({
       name,
       email,
-      password,
+      password
+      // dateOfBirth and gender are optional in your current DB schema
     });
 
     // Generate JWT token
@@ -74,9 +75,7 @@ router.post('/register', registerValidation, async (req, res) => {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
-          date_of_birth: user.date_of_birth,
-          gender: user.gender
+          role: user.role
         },
         token
       }
@@ -85,7 +84,8 @@ router.post('/register', registerValidation, async (req, res) => {
     console.error('Registration error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error during registration'
+      message: 'Server error during registration',
+      error: error.message
     });
   }
 });
@@ -139,13 +139,7 @@ router.post('/login', loginValidation, async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
-          date_of_birth: user.date_of_birth,
-          gender: user.gender,
-          phone: user.phone,
-          address: user.address,
-          city: user.city,
-          zip_code: user.zip_code,
-          profile_image: user.profile_image
+          phone: user.phone
         },
         token
       }
@@ -178,13 +172,7 @@ router.get('/me', auth, async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        date_of_birth: user.date_of_birth,
-        gender: user.gender,
         phone: user.phone,
-        address: user.address,
-        city: user.city,
-        zip_code: user.zip_code,
-        profile_image: user.profile_image,
         created_at: user.created_at
       }
     });

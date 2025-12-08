@@ -5,29 +5,16 @@ const { auth, adminAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Order validation
+// Validation for creating an order
 const orderValidation = [
-  body('deliveryAddress')
-    .isLength({ min: 10 })
-    .withMessage('Delivery address must be at least 10 characters long'),
-  body('deliveryCity')
-    .isLength({ min: 2 })
-    .withMessage('City is required'),
-  body('deliveryZip')
-    .isLength({ min: 5 })
-    .withMessage('ZIP code is required'),
-  body('paymentMethod')
-    .isIn(['card', 'cash'])
-    .withMessage('Invalid payment method'),
-  body('cartItems')
-    .isArray({ min: 1 })
-    .withMessage('At least one item is required'),
-  body('total')
-    .isFloat({ min: 0 })
-    .withMessage('Total must be a positive number'),
+  body('addId').isInt().withMessage('Address ID is required'),
+  body('subtotal').isFloat({ min: 0 }).withMessage('Subtotal must be number'),
+  body('deliveryFee').isFloat({ min: 0 }).withMessage('Delivery fee must be number'),
+  body('totalAmount').isFloat({ min: 0 }).withMessage('Total must be number'),
+  body('items').isArray({ min: 1 }).withMessage('At least one item is required'),
 ];
 
-// Create new order
+// CREATE ORDER
 router.post('/', auth, orderValidation, async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -40,25 +27,20 @@ router.post('/', auth, orderValidation, async (req, res) => {
     }
 
     const {
-      cartItems,
-      total,
-      deliveryAddress,
-      deliveryCity,
-      deliveryZip,
-      paymentMethod,
-      notes
+      addId,
+      subtotal,
+      deliveryFee,
+      totalAmount,
+      items
     } = req.body;
 
-    // Create order
     const order = await Order.create({
       userId: req.user.id,
-      items: cartItems,
-      totalAmount: total,
-      paymentMethod,
-      deliveryAddress,
-      deliveryCity,
-      deliveryZip,
-      notes: notes || ''
+      addId,
+      subtotal,
+      deliveryFee,
+      totalAmount,
+      items
     });
 
     res.status(201).json({
@@ -66,6 +48,7 @@ router.post('/', auth, orderValidation, async (req, res) => {
       message: 'Order placed successfully',
       data: order
     });
+
   } catch (error) {
     console.error('Create order error:', error);
     res.status(500).json({
@@ -75,11 +58,11 @@ router.post('/', auth, orderValidation, async (req, res) => {
   }
 });
 
-// Get user's orders
+// GET logged user's orders
 router.get('/my-orders', auth, async (req, res) => {
   try {
     const { status, startDate, endDate } = req.query;
-    
+
     const filters = {
       status: status || 'all',
       startDate: startDate || null,
@@ -93,6 +76,7 @@ router.get('/my-orders', auth, async (req, res) => {
       count: orders.length,
       data: orders
     });
+
   } catch (error) {
     console.error('Get user orders error:', error);
     res.status(500).json({
@@ -102,7 +86,7 @@ router.get('/my-orders', auth, async (req, res) => {
   }
 });
 
-// Get single order
+// GET single order
 router.get('/:id', auth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -114,7 +98,6 @@ router.get('/:id', auth, async (req, res) => {
       });
     }
 
-    // Check if user owns the order or is admin
     if (order.user_id !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -126,6 +109,7 @@ router.get('/:id', auth, async (req, res) => {
       success: true,
       data: order
     });
+
   } catch (error) {
     console.error('Get order error:', error);
     res.status(500).json({
@@ -135,7 +119,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// Cancel order
+// CANCEL ORDER
 router.patch('/:id/cancel', auth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -147,7 +131,6 @@ router.patch('/:id/cancel', auth, async (req, res) => {
       });
     }
 
-    // Check if user owns the order
     if (order.user_id !== req.user.id) {
       return res.status(403).json({
         success: false,
@@ -155,8 +138,7 @@ router.patch('/:id/cancel', auth, async (req, res) => {
       });
     }
 
-    // Check if order can be cancelled
-    if (!['pending', 'ready'].includes(order.status)) {
+    if (!['pending', 'ready'].includes(order.current_status)) {
       return res.status(400).json({
         success: false,
         message: 'Order cannot be cancelled in current status'
@@ -170,6 +152,7 @@ router.patch('/:id/cancel', auth, async (req, res) => {
       message: 'Order cancelled successfully',
       data: cancelledOrder
     });
+
   } catch (error) {
     console.error('Cancel order error:', error);
     res.status(500).json({
@@ -179,13 +162,13 @@ router.patch('/:id/cancel', auth, async (req, res) => {
   }
 });
 
-// Admin routes
+// ==================== ADMIN ROUTES ====================
 
 // Get all orders (admin only)
 router.get('/admin/all', adminAuth, async (req, res) => {
   try {
     const { status, search } = req.query;
-    
+
     const filters = {
       status: status || 'all',
       search: search || ''
@@ -198,6 +181,7 @@ router.get('/admin/all', adminAuth, async (req, res) => {
       count: orders.length,
       data: orders
     });
+
   } catch (error) {
     console.error('Get all orders error:', error);
     res.status(500).json({
@@ -233,11 +217,12 @@ router.patch('/admin/:id/status', adminAuth, async (req, res) => {
       message: 'Order status updated successfully',
       data: order
     });
+
   } catch (error) {
     console.error('Update order status error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while updating order status'
+      message: 'Server error while updating status'
     });
   }
 });
@@ -268,6 +253,7 @@ router.patch('/admin/:id/payment-status', adminAuth, async (req, res) => {
       message: 'Payment status updated successfully',
       data: order
     });
+
   } catch (error) {
     console.error('Update payment status error:', error);
     res.status(500).json({
@@ -277,7 +263,7 @@ router.patch('/admin/:id/payment-status', adminAuth, async (req, res) => {
   }
 });
 
-// Get order statistics (admin only)
+// Get statistics (admin only)
 router.get('/admin/stats', adminAuth, async (req, res) => {
   try {
     const stats = await Order.getStats();
@@ -286,11 +272,12 @@ router.get('/admin/stats', adminAuth, async (req, res) => {
       success: true,
       data: stats
     });
+
   } catch (error) {
-    console.error('Get order stats error:', error);
+    console.error('Get stats error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while fetching order statistics'
+      message: 'Server error while fetching statistics'
     });
   }
 });

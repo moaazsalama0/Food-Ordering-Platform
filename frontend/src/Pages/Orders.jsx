@@ -16,9 +16,12 @@ import {
 } from "react-icons/fa";
 import "./Orders.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -28,38 +31,54 @@ export default function Orders() {
 
   const fetchOrders = async () => {
     setLoading(true);
+    setError(null);
 
     try {
       const token = localStorage.getItem("token");
+      
+      if (!token) {
+        setError("Please login to view orders");
+        return;
+      }
 
-      const res = await fetch("http://localhost:8000/api/orders", {
+      // Use the correct endpoint from backend: /api/orders/my-orders
+      const res = await fetch(`${API_URL}/orders/my-orders`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
 
       if (!res.ok) {
-        throw new Error("Failed to fetch orders");
+        throw new Error(`HTTP error! status: ${res.status}`);
       }
 
       const data = await res.json();
+      console.log('Orders response:', data);
 
-      setOrders(data); // API returns an array
+      // Backend returns { success: true, count: X, data: [...] }
+      if (data.success) {
+        setOrders(data.data || []);
+      } else {
+        throw new Error(data.message || 'Failed to fetch orders');
+      }
     } catch (err) {
-      console.error("ORDERS ERROR:", err);
+      console.error("Fetch orders error:", err);
+      setError(err.message || "Failed to fetch orders");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  // ICONS
+  // Get status icon
   const getStatusIcon = (status) => {
     switch (status) {
       case "delivered":
         return <FaCheckCircle className="status-icon delivered" />;
-      case "processing":
+      case "ready":
+      case "pending":
         return <FaClock className="status-icon processing" />;
-      case "on-the-way":
+      case "on the way":
         return <FaTruck className="status-icon ontheway" />;
       case "cancelled":
         return <FaTimesCircle className="status-icon cancelled" />;
@@ -72,9 +91,9 @@ export default function Orders() {
     switch (status) {
       case "delivered":
         return "success";
-      case "processing":
+      case "ready":
         return "warning";
-      case "on-the-way":
+      case "on the way":
         return "primary";
       case "cancelled":
         return "danger";
@@ -86,15 +105,46 @@ export default function Orders() {
   // Filter orders
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.id.toString().includes(searchTerm.toLowerCase()) ||
-      order.cartItems.some((item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.id?.toString().includes(searchTerm);
 
     const matchesFilter = filterStatus === "all" || order.status === filterStatus;
 
     return matchesSearch && matchesFilter;
   });
+
+  if (loading) {
+    return (
+      <div className="orders-page">
+        <div className="orders-container">
+          <div className="text-center py-20">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+            <p className="text-xl mt-4 text-gray-600">Loading your orders...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="orders-page">
+        <div className="orders-container">
+          <div className="text-center py-20">
+            <div className="text-red-600 text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Orders</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button
+              onClick={fetchOrders}
+              className="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="orders-page">
@@ -124,29 +174,28 @@ export default function Orders() {
             </Button>
 
             <Button
-              className={
-                filterStatus === "processing"
-                  ? "filter-active"
-                  : "filter-btn"
-              }
-              onClick={() => setFilterStatus("processing")}
+              className={filterStatus === "pending" ? "filter-active" : "filter-btn"}
+              onClick={() => setFilterStatus("pending")}
             >
-              Processing
+              Pending
             </Button>
 
             <Button
-              className={
-                filterStatus === "on-the-way" ? "filter-active" : "filter-btn"
-              }
-              onClick={() => setFilterStatus("on-the-way")}
+              className={filterStatus === "ready" ? "filter-active" : "filter-btn"}
+              onClick={() => setFilterStatus("ready")}
+            >
+              Ready
+            </Button>
+
+            <Button
+              className={filterStatus === "on the way" ? "filter-active" : "filter-btn"}
+              onClick={() => setFilterStatus("on the way")}
             >
               On the way
             </Button>
 
             <Button
-              className={
-                filterStatus === "delivered" ? "filter-active" : "filter-btn"
-              }
+              className={filterStatus === "delivered" ? "filter-active" : "filter-btn"}
               onClick={() => setFilterStatus("delivered")}
             >
               Delivered
@@ -156,32 +205,29 @@ export default function Orders() {
 
         {/* ORDERS LIST */}
         <div className="orders-list">
-          {loading ? (
-            <div className="loading-state">Loading orders...</div>
-          ) : filteredOrders.length === 0 ? (
+          {filteredOrders.length === 0 ? (
             <div className="empty-state">
               <h3>No orders found</h3>
-              <p>Try adjusting your search or filters</p>
+              <p>
+                {searchTerm || filterStatus !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "You haven't placed any orders yet"}
+              </p>
             </div>
           ) : (
             filteredOrders.map((order) => {
-              const subtotal = order.cartItems.reduce(
-                (sum, item) => sum + item.price * item.quantity,
-                0
-              );
-
+              // Calculate totals
+              const subtotal = parseFloat(order.total_amount || 0);
               const deliveryFee = subtotal >= 200 ? 0 : 20;
-
               const total = subtotal + deliveryFee;
 
               return (
                 <Card key={order.id} className="order-card">
                   <CardHeader className="order-card-header">
                     <div className="order-info">
-                      <h3>Order #{order.id}</h3>
-
+                      <h3>Order #{order.order_number || order.id}</h3>
                       <p>
-                        {new Date(order.createdAt).toLocaleString("en-US", {
+                        {new Date(order.created_at).toLocaleString("en-US", {
                           year: "numeric",
                           month: "long",
                           day: "numeric",
@@ -196,22 +242,20 @@ export default function Orders() {
                       color={getStatusColor(order.status)}
                       variant="flat"
                     >
-                      {order.status.replace("-", " ")}
+                      {order.status?.replace("-", " ") || "pending"}
                     </Chip>
                   </CardHeader>
 
                   <CardBody className="order-card-body">
                     {/* ITEMS */}
                     <div className="order-items">
-                      {order.cartItems.map((item, index) => (
+                      {order.items?.map((item, index) => (
                         <div key={index} className="order-item">
                           <div className="item-details">
                             <span>{item.name}</span>
                             <span>×{item.quantity}</span>
                           </div>
-                          <span>
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </span>
+                          <span>${(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
@@ -221,18 +265,25 @@ export default function Orders() {
                       <div className="info-item">
                         <span>Address:</span>
                         <span>
-                          {order.deliveryAddress},{" "}
-                          {order.deliveryCity} {order.deliveryZip}
+                          {order.delivery_address}, {order.delivery_city}{" "}
+                          {order.delivery_zip}
                         </span>
                       </div>
 
                       <div className="info-item">
                         <span>Payment Method:</span>
-                        <span>{order.paymentMethod}</span>
+                        <span>{order.payment_method}</span>
+                      </div>
+
+                      <div className="info-item">
+                        <span>Payment Status:</span>
+                        <span className={order.payment_status === 'completed' ? 'text-green-600' : 'text-yellow-600'}>
+                          {order.payment_status}
+                        </span>
                       </div>
                     </div>
 
-                    {/* TOTALS (DYNAMIC) */}
+                    {/* TOTALS */}
                     <div className="order-total">
                       <span>Subtotal:</span>
                       <span>${subtotal.toFixed(2)}</span>
@@ -245,20 +296,22 @@ export default function Orders() {
 
                     <div className="order-total total-amount-row">
                       <span>Total:</span>
-                      <span className="total-amount">
-                        ${total.toFixed(2)}
-                      </span>
+                      <span className="total-amount">${total.toFixed(2)}</span>
                     </div>
 
                     {/* ACTIONS */}
                     <div className="order-actions">
-                      <Button className="track-btn">Track Order</Button>
+                      <Button className="details-btn">View Details</Button>
 
                       {order.status === "delivered" && (
                         <Button className="reorder-btn">Reorder</Button>
                       )}
 
-                      <Button className="details-btn">View Details</Button>
+                      {(order.status === "pending" || order.status === "ready") && (
+                        <Button className="text-red-600 border-red-600">
+                          Cancel Order
+                        </Button>
+                      )}
                     </div>
                   </CardBody>
                 </Card>

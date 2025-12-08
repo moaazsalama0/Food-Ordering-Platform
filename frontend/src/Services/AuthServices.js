@@ -39,6 +39,8 @@ api.interceptors.response.use(
 
 export async function SignUp(userData) {
     try {
+        console.log('Sending registration data:', userData);
+        
         // Match backend expected format from README
         const { data } = await api.post('/auth/register', {
             name: userData.name,
@@ -60,17 +62,29 @@ export async function SignUp(userData) {
             return { error: data.message || 'Registration failed' };
         }
     } catch (err) {
-        console.error('Signup error:', err.response?.data);
-        return { 
-            error: err.response?.data?.message || 
-                   err.response?.data?.errors?.[0]?.msg ||
-                   'Registration failed. Please try again.' 
-        };
+        console.error('Signup error:', err.response?.data || err);
+        
+        // Extract error message from various possible formats
+        let errorMessage = 'Registration failed. Please try again.';
+        
+        if (err.response?.data) {
+            if (err.response.data.message) {
+                errorMessage = err.response.data.message;
+            } else if (err.response.data.errors && Array.isArray(err.response.data.errors)) {
+                errorMessage = err.response.data.errors.map(e => e.msg).join(', ');
+            } else if (typeof err.response.data === 'string') {
+                errorMessage = err.response.data;
+            }
+        }
+        
+        return { error: errorMessage };
     }
 }
 
 export async function Signin(userData) {
     try {
+        console.log('Sending login data:', userData);
+        
         const { data } = await api.post('/auth/login', {
             email: userData.email,
             password: userData.password
@@ -88,11 +102,20 @@ export async function Signin(userData) {
             return { error: data.message || 'Login failed' };
         }
     } catch (err) {
-        console.error('Login error:', err.response?.data);
-        return { 
-            error: err.response?.data?.message || 
-                   'Login failed. Please check your credentials.' 
-        };
+        console.error('Login error:', err.response?.data || err);
+        
+        // Extract error message
+        let errorMessage = 'Login failed. Please check your credentials.';
+        
+        if (err.response?.data) {
+            if (err.response.data.message) {
+                errorMessage = err.response.data.message;
+            } else if (err.response.data.errors && Array.isArray(err.response.data.errors)) {
+                errorMessage = err.response.data.errors.map(e => e.msg).join(', ');
+            }
+        }
+        
+        return { error: errorMessage };
     }
 }
 

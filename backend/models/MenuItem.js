@@ -22,7 +22,7 @@ class MenuItem {
              d.category_id, d.is_available, c.category_name
       FROM dish d
       LEFT JOIN category c ON d.category_id = c.category_id
-      WHERE d.is_available = true
+      WHERE 1=1
     `;
     
     const values = [];
@@ -198,7 +198,7 @@ class MenuItem {
              d.category_id, d.is_available, c.category_name
       FROM dish d
       LEFT JOIN category c ON d.category_id = c.category_id
-      WHERE d.category_id = $1 AND d.is_available = true
+      WHERE d.category_id = $1 
       ORDER BY d.dish_id
     `;
     

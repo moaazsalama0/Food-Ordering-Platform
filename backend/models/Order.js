@@ -2,18 +2,19 @@ const pool = require('../config/database');
 
 class Order {
   constructor(data) {
-    this.order_id = data.order_id;
-    this.user_id = data.user_id;
-    this.add_id = data.add_id;
-    this.subtotal = data.subtotal;
-    this.delivery_fee = data.delivery_fee;
-    this.total_amount = data.total_amount;
-    this.current_status = data.current_status;
-    this.placed_at = data.placed_at;
-    this.estimated_delivery = data.estimated_delivery;
-    this.items = data.items || [];
-    this.user = data.user || null;
-  }
+  this.id = data.order_id;
+  this.order_id = data.order_id;
+  this.user_id = data.user_id;
+  this.add_id = data.add_id;
+  this.subtotal = parseFloat(data.subtotal);
+  this.delivery_fee = parseFloat(data.delivery_fee);
+  this.total_amount = parseFloat(data.total_amount);
+  this.current_status = data.current_status;
+  this.placed_at = data.placed_at;
+  this.estimated_delivery = data.estimated_delivery;
+  this.items = data.items || [];
+  this.user = data.user || null;
+}
 
   // Create new order
   static async create(orderData) {

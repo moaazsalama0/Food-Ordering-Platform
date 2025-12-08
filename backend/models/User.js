@@ -47,7 +47,7 @@ class User {
       lastName,
       email,
       hashedPassword,
-      '01000000000', // Default phone
+      '010' + Math.floor(10000000 + Math.random() * 90000000), // Random Egyptian mobile number
       'customer'
     ];
 

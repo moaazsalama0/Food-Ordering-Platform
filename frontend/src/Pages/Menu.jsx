@@ -152,7 +152,8 @@ export default function Menu() {
                 alt={item.name}
                 className="w-full h-48 object-cover"
                 onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                  e.target.onerror = null;
+                  e.target.src = '/no-image.svg';
                 }}
               />
 

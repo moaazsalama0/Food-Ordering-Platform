@@ -648,7 +648,7 @@ COPY public.category (category_id, category_name, category_description, image_ur
 --
 
 COPY public.dish (dish_id, category_id, dish_name, dish_description, price, img, is_available) FROM stdin;
-1	1	Margherita Pizza	Classic pizza with tomato sauce, mozzarella, and basil	89.99	https://cdn.discordapp.com/attachments/1443219005447082017/1443219430778601586/MARGHERITA.jpg?ex=69284656&is=6926f4d6&hm=d1b14632e5d719cad35ef82bba2d177b21a7017bf8b4bcecf50b35d1dc45824d&	t
+1	1	Margherita Pizza	Classic pizza with tomato sauce, mozzarella, and basil	89.99	https://ooni.com/cdn/shop/articles/20220211142347-margherita-9920_ba86be55-674e-4f35-8094-2067ab41a671.jpg?v=1737104576&width=1080	t
 2	1	Pepperoni Pizza	Pizza topped with pepperoni slices and cheese	109.99	https://cdn.discordapp.com/attachments/1443219005447082017/1443227059005689999/pepperoni.jpg?ex=69284d70&is=6926fbf0&hm=56bce510fd6e7ff21ad7fbf24780c2f45b1e372ddb884836ae03af2cc3fe951a&	t
 3	1	Vegetarian Pizza	Loaded with fresh vegetables and cheese	99.99	https://cdn.discordapp.com/attachments/1443219005447082017/1443227060339343380/veggie_pizza.jpg?ex=69284d71&is=6926fbf1&hm=c1cfb0d123da762a176eaf5c6e142056763fb4439b515db2d9bb8efb617fe63e&	t
 4	2	Cheese Burger	Double beef patty with melted cheese	94.99	https://cdn.discordapp.com/attachments/1443219005447082017/1443227059299156131/cheese_burger.jpg?ex=69284d70&is=6926fbf0&hm=297624fa1242c0a6b6969d3bd68d302b11a2594f8d4b78a0800a431aaf5f3bdf&	t

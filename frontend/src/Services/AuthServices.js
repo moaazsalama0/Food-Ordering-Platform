@@ -47,17 +47,22 @@ export async function SignUp(userData) {
             email: userData.email,
             password: userData.password,
             dateOfBirth: userData.dateOfBirth,
-            gender: userData.gender
+            gender: userData.gender,
+            phone: userData.phone
         });
         
         console.log('Signup response:', data);
         
         if (data.success) {
-            // Store token and user data
-            localStorage.setItem('token', data.data.token);
-            localStorage.setItem('user', JSON.stringify(data.data.user));
-            
-            return { message: 'success', data };
+                // Normalize token/user locations and store them
+                const token = data?.data?.token || data?.token || data?.authToken;
+                const user = data?.data?.user || data?.user;
+
+                if (token) localStorage.setItem('token', token);
+                if (user) localStorage.setItem('user', JSON.stringify(user));
+
+                // Return a clear shape so callers can read token directly
+                return { message: 'success', token, user, raw: data };
         } else {
             return { error: data.message || 'Registration failed' };
         }
@@ -93,11 +98,13 @@ export async function Signin(userData) {
         console.log('Login response:', data);
         
         if (data.success) {
-            // Store token and user data
-            localStorage.setItem('token', data.data.token);
-            localStorage.setItem('user', JSON.stringify(data.data.user));
-            
-            return { message: 'success', token: data.data.token, user: data.data.user };
+                const token = data?.data?.token || data?.token || data?.authToken;
+                const user = data?.data?.user || data?.user;
+
+                if (token) localStorage.setItem('token', token);
+                if (user) localStorage.setItem('user', JSON.stringify(user));
+
+                return { message: 'success', token, user };
         } else {
             return { error: data.message || 'Login failed' };
         }

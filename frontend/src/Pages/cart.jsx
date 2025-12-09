@@ -3,6 +3,7 @@ import { Button, Card, CardBody, Input } from '@heroui/react';
 import { FaTrash, FaPlus, FaMinus, FaShoppingCart, FaTag } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import './Cart.css';
+import api, { endpoints } from '../api/api';
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -52,23 +53,33 @@ export default function Cart() {
   // -------------------------------
   const updateTotalsFromApi = async (items, coupon = null) => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/cart/calculate-totals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map(i => ({ itemId: i.id, quantity: i.quantity })),
-          couponCode: coupon || undefined
-        })
-      });
+      if (!Array.isArray(items) || items.length === 0) {
+        setTotals({ subtotal: 0, discount: 0, deliveryFee: 0, tax: 0, total: 0 });
+        return;
+      }
 
-      const data = await res.json();
+      // Send price + quantity so backend can compute subtotal correctly
+      const payload = {
+        items: items.map(i => ({ id: i.id, price: i.price, quantity: i.quantity })),
+        couponCode: coupon || undefined
+      };
+
+      const res = await api.post(endpoints.CALCULATE_TOTALS, payload);
+      const response = res.data;
+
+      if (!response || !response.success) {
+        console.error('Calculate totals failed:', response);
+        return;
+      }
+
+      const data = response.data;
 
       setTotals({
-        subtotal: data.subtotal,
-        discount: data.discount,
-        deliveryFee: data.deliveryFee,
-        tax: data.tax,
-        total: data.total
+        subtotal: data.subtotal || 0,
+        discount: data.discount || 0,
+        deliveryFee: data.deliveryFee || 0,
+        tax: data.tax || 0,
+        total: data.total || 0
       });
 
     } catch (err) {
@@ -86,11 +97,7 @@ export default function Cart() {
   // -------------------------------
   const sendUpdateToBackend = async (itemId, quantity) => {
     try {
-      await fetch("http://127.0.0.1:8000/api/cart/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId, quantity })
-      });
+      await api.post(endpoints.ADD_TO_CART, { itemId, quantity });
     } catch (err) {
       console.error("Cart update failed:", err);
     }

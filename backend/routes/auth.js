@@ -41,7 +41,7 @@ router.post('/register', registerValidation, async (req, res) => {
       });
     }
 
-    const { name, email, password, dateOfBirth, gender } = req.body;
+    const { name, email, password, dateOfBirth, gender, phone } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findByEmail(email);
@@ -52,11 +52,23 @@ router.post('/register', registerValidation, async (req, res) => {
       });
     }
 
-    // Create new user (User.create now only accepts name, email, password)
+    // If phone provided, ensure it's not already used
+    if (phone) {
+      const existingByPhone = await User.findByPhone(phone);
+      if (existingByPhone) {
+        return res.status(400).json({
+          success: false,
+          message: 'User already exists with this phone number'
+        });
+      }
+    }
+
+    // Create new user (now accepts phone if provided)
     const user = await User.create({
       name,
       email,
-      password
+      password,
+      phone
       // dateOfBirth and gender are optional in your current DB schema
     });
 
@@ -82,6 +94,19 @@ router.post('/register', registerValidation, async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
+    // Handle Postgres unique constraint violation (duplicate key)
+    if (error.code === '23505') {
+      let field = 'value';
+      if (error.constraint && error.constraint.includes('email')) field = 'email';
+      else if (error.constraint && error.constraint.includes('phone')) field = 'phone number';
+
+      return res.status(400).json({
+        success: false,
+        message: `A user with this ${field} already exists`,
+        error: error.detail || error.message
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Server error during registration',

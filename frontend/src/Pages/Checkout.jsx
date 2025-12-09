@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import api, { endpoints } from '../api/api';
 
 export default function Checkout() {
   const location = useLocation();
@@ -7,15 +8,68 @@ export default function Checkout() {
 
   // ---- SAFE VALUES ----
   const cartItems = location.state?.cartItems || [];
-  const totalPrice = Number(location.state?.totalPrice) || 0;
 
   // ---- FORM STATE ----
   const [address, setAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
 
+  // ---- TOTALS STATE ----
+  const [totals, setTotals] = useState({
+    subtotal: Number(location.state?.subtotal) || 0,
+    discount: Number(location.state?.discount) || 0,
+    deliveryFee: Number(location.state?.deliveryFee) || 0,
+    tax: Number(location.state?.tax) || 0,
+    total: Number(location.state?.total) || 0
+  });
+
   // ---- PRICES ----
-  const deliveryFee = totalPrice >= 200 ? 0 : 20;
-  const finalTotal = totalPrice + deliveryFee;
+  // Force delivery to be free per request
+  const deliveryFee = 0;
+
+  const finalTotal = (() => {
+    // Prefer server-calculated values, but recompute total if needed
+    const subtotal = Number(totals.subtotal) || 0;
+    const discount = Number(totals.discount) || 0;
+    const tax = Number(totals.tax) || 0;
+    return Math.round((subtotal - discount + tax + deliveryFee) * 100) / 100;
+  })();
+
+  // If totals weren't provided via navigation state, call backend to compute them
+  useEffect(() => {
+    const fetchTotals = async () => {
+      try {
+        if (!Array.isArray(cartItems) || cartItems.length === 0) return;
+
+        // If subtotal already present, skip calling backend
+        if (location.state && location.state.subtotal) return;
+
+        const payload = {
+          items: cartItems.map(i => ({ id: i.id, price: i.price, quantity: i.quantity })),
+          couponCode: location.state?.couponCode || undefined
+        };
+
+        const res = await api.post(endpoints.CALCULATE_TOTALS, payload);
+        const response = res.data;
+
+        if (response && response.success && response.data) {
+          // Force deliveryFee to 0 (free delivery)
+          const d = response.data;
+          const updated = {
+            subtotal: d.subtotal || 0,
+            discount: d.discount || 0,
+            deliveryFee: 0,
+            tax: d.tax || 0,
+            total: Math.round(((d.subtotal || 0) - (d.discount || 0) + (d.tax || 0) + 0) * 100) / 100
+          };
+          setTotals(updated);
+        }
+      } catch (err) {
+        console.error('Failed to fetch totals in Checkout:', err);
+      }
+    };
+
+    fetchTotals();
+  }, [cartItems, location.state]);
 
   const handlePlaceOrder = () => {
     if (!address || !paymentMethod) {
@@ -52,12 +106,12 @@ export default function Checkout() {
         <div className="border-t mt-3 pt-3">
           <div className="flex justify-between mb-1">
             <span>Subtotal:</span>
-            <span>${totalPrice.toFixed(2)}</span>
+            <span>${Number(totals.subtotal || 0).toFixed(2)}</span>
           </div>
 
           <div className="flex justify-between mb-1">
             <span>Delivery Fee:</span>
-            <span>${deliveryFee.toFixed(2)}</span>
+            <span>{deliveryFee === 0 ? "FREE" : `$${deliveryFee.toFixed(2)}`}</span>
           </div>
 
           <div className="flex justify-between font-bold text-lg mt-2">

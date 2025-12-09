@@ -27,7 +27,7 @@ class User {
 
   // Create new user
   static async create(userData) {
-    const { name, email, password, dateOfBirth, gender } = userData;
+    const { name, email, password, dateOfBirth, gender, phone } = userData;
     
     // Split name into first and last
     const names = name.split(' ');
@@ -42,23 +42,54 @@ class User {
       RETURNING user_id, first_name, last_name, email, phone_number, role
     `;
 
-    const values = [
-      firstName,
-      lastName,
-      email,
-      hashedPassword,
-      '010' + Math.floor(10000000 + Math.random() * 90000000), // Random Egyptian mobile number
-      'customer'
-    ];
+    // Helper to generate an 11-digit Egyptian-like phone number starting with 010
+    const genPhone = () => {
+      const suffix = Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
+      return '010' + suffix; // produces 11-digit number like 01012345678
+    };
 
-    const result = await pool.query(query, values);
-    return new User(result.rows[0]);
+    // Try to insert, retrying if we get a unique-constraint collision on phone
+    const maxAttempts = 5;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const phoneToUse = phone || genPhone();
+      const values = [
+        firstName,
+        lastName,
+        email,
+        hashedPassword,
+        phoneToUse,
+        'customer'
+      ];
+
+      try {
+        const result = await pool.query(query, values);
+        return new User(result.rows[0]);
+      } catch (err) {
+        // If duplicate phone and we generated it, retry with a new generated phone
+        if (err.code === '23505' && !phone) {
+          if (attempt === maxAttempts - 1) throw err;
+          continue; // try again
+        }
+
+        // Other errors or provided phone duplicates should be propagated to caller
+        throw err;
+      }
+    }
   }
 
   // Find user by email
   static async findByEmail(email) {
     const query = 'SELECT * FROM users WHERE email = $1';
     const result = await pool.query(query, [email]);
+
+    if (result.rows.length === 0) return null;
+    return new User(result.rows[0]);
+  }
+
+  // Find user by phone
+  static async findByPhone(phone) {
+    const query = 'SELECT * FROM users WHERE phone_number = $1';
+    const result = await pool.query(query, [phone]);
 
     if (result.rows.length === 0) return null;
     return new User(result.rows[0]);

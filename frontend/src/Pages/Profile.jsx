@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Profile.css';
+import api, { endpoints } from '../api/api';
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -7,13 +8,64 @@ export default function Profile() {
   const [profileImage, setProfileImage] = useState(null);
 
   const [formData, setFormData] = useState({
-    name: 'yara',
-    email: 'yarahossam3077@example.com',
-    phone: '+1 (555) 123-4567',
-    address: 'janakles',
-    city: 'egypt',
-    zipCode: '10001'
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    zipCode: ''
   });
+
+  // Load signed-in user from localStorage first, then try /api/auth/me
+  useEffect(() => {
+    const loadFromLocal = () => {
+      try {
+        const stored = localStorage.getItem('user');
+        if (stored) {
+          const u = JSON.parse(stored);
+          setFormData(prev => ({
+            ...prev,
+            name: u.name || prev.name,
+            email: u.email || prev.email,
+            phone: u.phone || prev.phone,
+            address: u.address || prev.address,
+            city: u.city || prev.city,
+            zipCode: u.zip_code || prev.zipCode || u.zipCode
+          }));
+          if (u.profile_image) setProfileImage(u.profile_image);
+        }
+      } catch (err) {
+        console.error('Failed to parse stored user:', err);
+      }
+    };
+
+    const fetchMe = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await api.get(endpoints.ME);
+        const response = res.data;
+        if (response && response.success && response.data) {
+          const u = response.data;
+          setFormData(prev => ({
+            ...prev,
+            name: u.name || prev.name,
+            email: u.email || prev.email,
+            phone: u.phone || prev.phone,
+            address: u.address || prev.address,
+            city: u.city || prev.city,
+            zipCode: u.zip_code || prev.zipCode || u.zipCode
+          }));
+          if (u.profile_image) setProfileImage(u.profile_image);
+        }
+      } catch (err) {
+        console.debug('Could not fetch /auth/me, falling back to local user');
+      }
+    };
+
+    loadFromLocal();
+    fetchMe();
+  }, []);
 
   const [formErrors, setFormErrors] = useState({});
 

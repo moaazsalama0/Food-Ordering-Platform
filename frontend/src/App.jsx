@@ -14,6 +14,12 @@ import Menu from './Pages/Menu';
 import Cart from './Pages/cart';
 import Checkout from './Pages/Checkout';
 import Orders from './Pages/Orders';
+import AdminLayout from './Layouts/AdminLayout';
+import AddDish from './admin/pages/AddDish';
+import EditDish from './admin/pages/EditDish';
+import AdminOrders from './admin/pages/Orders';
+import RatingStatistics from './admin/pages/RatingStatistics';
+import UploadMealImages from './admin/pages/UploadMealImages';
 
 
 function App() {
@@ -50,6 +56,21 @@ function App() {
           )
         },
         { path: '*', element: <NotFound /> },
+      ],
+    },
+    {
+      path: 'admin',
+      element: (
+        <ProtectedRoute>
+          <AdminLayout />
+        </ProtectedRoute>
+      ),
+      children: [
+        { path: 'add-meal', element: <AddDish /> },
+        { path: 'edit-meal', element: <EditDish /> },
+        { path: 'orders', element: <AdminOrders /> },
+        { path: 'ratings', element: <RatingStatistics /> },
+        { path: 'upload-image', element: <UploadMealImages /> },
       ],
     },
     {

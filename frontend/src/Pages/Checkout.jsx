@@ -93,11 +93,30 @@ export default function Checkout() {
         {cartItems.length === 0 ? (
           <p className="text-gray-600">Your cart is empty.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {cartItems.map((item) => (
-              <li key={item.id} className="flex justify-between">
-                <span>{item.name} × {item.quantity}</span>
-                <span>${(item.price * item.quantity).toFixed(2)}</span>
+              <li key={item.id} className="flex gap-3 items-start border-b pb-3">
+                <div className="flex-shrink-0">
+                  <img
+                    src={item.img || '/no-image.svg'}
+                    alt={item.name}
+                    className="w-16 h-16 object-cover rounded-lg"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/no-image.svg';
+                    }}
+                  />
+                </div>
+                <div className="flex-grow">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-gray-800">{item.name}</h3>
+                      <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                    </div>
+                    <span className="font-bold text-amber-600">${(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">${item.price.toFixed(2)} each</p>
+                </div>
               </li>
             ))}
           </ul>

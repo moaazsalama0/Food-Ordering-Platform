@@ -9,11 +9,12 @@ export default function Orders() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await api.get(endpoints.ORDERS, { headers: authHeaders() });
-      setOrders(res.data);
+      // Use admin orders endpoint for the admin panel
+      const res = await api.get(endpoints.ADMIN_ORDERS, { headers: authHeaders() });
+      setOrders(res.data.data || res.data);
     } catch (err) {
       console.error(err);
-      alert("Failed to load orders");
+      alert("Failed to load orders: " + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }

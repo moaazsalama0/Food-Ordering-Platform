@@ -17,7 +17,8 @@ export function authHeaders() {
 export const endpoints = {
   // Menu endpoints
   MENU: "menu/",
-  DISHES: "menu/", // Alias for menu
+  DISHES: "dishes/", // Use dishes alias from backend
+  MEALS: "dishes/", // Alias for MEALS in admin panel
   MENU_ITEM: (id) => `menu/${id}`,
   
   // Auth endpoints

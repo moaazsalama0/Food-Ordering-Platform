@@ -29,25 +29,42 @@ export default function EditMeal() {
     e.preventDefault();
     try {
       setLoading(true);
+      
+      if (!meal.name || !meal.description || !meal.price || !meal.categoryId) {
+        alert("Please fill in all required fields");
+        setLoading(false);
+        return;
+      }
+
       if (image) {
         const fd = new FormData();
         fd.append("name", meal.name);
         fd.append("description", meal.description);
         fd.append("price", meal.price);
-        fd.append("category", meal.category || "");
-        fd.append("is_available", meal.is_available ?? true);
+        fd.append("categoryId", meal.categoryId || meal.category_id);
+        fd.append("preparationTime", meal.preparationTime || 30);
+        fd.append("calories", meal.calories || 0);
         fd.append("image", image);
         await api.put(`${endpoints.MEALS}${id}/`, fd, {
           headers: { ...authHeaders(), "Content-Type": "multipart/form-data" },
         });
       } else {
-        await api.put(`${endpoints.MEALS}${id}/`, meal, { headers: authHeaders() });
+        const updateData = {
+          name: meal.name,
+          description: meal.description,
+          price: meal.price,
+          categoryId: meal.categoryId || meal.category_id,
+          preparationTime: meal.preparationTime || 30,
+          calories: meal.calories || 0,
+          isAvailable: meal.isAvailable !== undefined ? meal.isAvailable : (meal.is_available ?? true)
+        };
+        await api.put(`${endpoints.MEALS}${id}/`, updateData, { headers: authHeaders() });
       }
-      alert("Meal updated");
+      alert("Meal updated successfully!");
       nav("/admin/orders");
     } catch (err) {
       console.error(err);
-      alert("Update failed");
+      alert(err.response?.data?.message || err.response?.data?.detail || "Update failed");
     } finally {
       setLoading(false);
     }
@@ -63,15 +80,21 @@ export default function EditMeal() {
         <label className="block mb-2">Price</label>
         <input name="price" type="number" value={meal.price} onChange={handleChange} required className="w-full mb-3 p-2 border rounded" />
 
-        <label className="block mb-2">Category</label>
-        <input name="category" value={meal.category || ""} onChange={handleChange} className="w-full mb-3 p-2 border rounded" />
+        <label className="block mb-2">Category ID</label>
+        <input name="categoryId" type="number" value={meal.categoryId || meal.category_id || ""} onChange={handleChange} required className="w-full mb-3 p-2 border rounded" />
 
         <label className="block mb-2">Description</label>
-        <textarea name="description" value={meal.description || ""} onChange={handleChange} className="w-full mb-3 p-2 border rounded" />
+        <textarea name="description" value={meal.description || ""} onChange={handleChange} required className="w-full mb-3 p-2 border rounded" />
+
+        <label className="block mb-2">Preparation Time (minutes)</label>
+        <input name="preparationTime" type="number" value={meal.preparationTime || ""} onChange={handleChange} className="w-full mb-3 p-2 border rounded" />
+
+        <label className="block mb-2">Calories</label>
+        <input name="calories" type="number" value={meal.calories || ""} onChange={handleChange} className="w-full mb-3 p-2 border rounded" />
 
         <label className="block mb-2">Replace Image (optional)</label>
         <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} className="mb-4" />
-        {meal.image && <img src={meal.image} alt="meal" className="w-32 h-20 object-cover mb-3" />}
+        {(meal.image || meal.img) && <img src={meal.image || meal.img} alt="meal" className="w-32 h-20 object-cover mb-3" />}
 
         <div className="flex gap-3">
           <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded">{loading ? "Saving..." : "Save"}</button>

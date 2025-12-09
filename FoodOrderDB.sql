@@ -635,9 +635,9 @@ COPY public.cart_item (cart_id, dish_id, quantity) FROM stdin;
 --
 
 COPY public.category (category_id, category_name, category_description, image_url) FROM stdin;
-1	Pizza	Delicious Italian-style pizzas with various toppings	https://cdn.discordapp.com/attachments/1443219005447082017/1443219431219134636/pizza.jpg?ex=69284656&is=6926f4d6&hm=177c8421894b5ce52e0779caf2effd5f59a974587bbd958cee29162f57c0446c&
-2	Burgers	Juicy burgers made with premium ingredients	https://cdn.discordapp.com/attachments/1443219005447082017/1443219377905471508/beefburger.jpg?ex=69284649&is=6926f4c9&hm=77df3aac1f3002537dbf6e9d5c8dc5644653d84ec70bbfe5fdbb2763e8c0dfab
-3	Desserts	Sweet treats to complete your meal	https://cdn.discordapp.com/attachments/1443219005447082017/1443219430384599204/dessert.jpeg?ex=69284655&is=6926f4d5&hm=2839679e1b38209b7cf99fcf545c0bf9e821701967922292c941562943858a19&
+1	Pizza	Delicious Italian-style pizzas with various toppings	https://images.pexels.com/photos/35068608/pexels-photo-35068608.jpeg
+2	Burgers	Juicy burgers made with premium ingredients	https://images.pexels.com/photos/1639557/pexels-photo-1639557.jpeg
+3	Desserts	Sweet treats to complete your meal	https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg
 \.
 
 
@@ -648,13 +648,13 @@ COPY public.category (category_id, category_name, category_description, image_ur
 --
 
 COPY public.dish (dish_id, category_id, dish_name, dish_description, price, img, is_available) FROM stdin;
-1	1	Margherita Pizza	Classic pizza with tomato sauce, mozzarella, and basil	89.99	https://ooni.com/cdn/shop/articles/20220211142347-margherita-9920_ba86be55-674e-4f35-8094-2067ab41a671.jpg?v=1737104576&width=1080	t
-2	1	Pepperoni Pizza	Pizza topped with pepperoni slices and cheese	109.99	https://cdn.discordapp.com/attachments/1443219005447082017/1443227059005689999/pepperoni.jpg?ex=69284d70&is=6926fbf0&hm=56bce510fd6e7ff21ad7fbf24780c2f45b1e372ddb884836ae03af2cc3fe951a&	t
-3	1	Vegetarian Pizza	Loaded with fresh vegetables and cheese	99.99	https://cdn.discordapp.com/attachments/1443219005447082017/1443227060339343380/veggie_pizza.jpg?ex=69284d71&is=6926fbf1&hm=c1cfb0d123da762a176eaf5c6e142056763fb4439b515db2d9bb8efb617fe63e&	t
-4	2	Cheese Burger	Double beef patty with melted cheese	94.99	https://cdn.discordapp.com/attachments/1443219005447082017/1443227059299156131/cheese_burger.jpg?ex=69284d70&is=6926fbf0&hm=297624fa1242c0a6b6969d3bd68d302b11a2594f8d4b78a0800a431aaf5f3bdf&	t
-5	2	Chicken Burger	Grilled chicken breast with mayo and lettuce	84.99	https://cdn.discordapp.com/attachments/1443219005447082017/1443227059601276938/chicken_butger.jpeg?ex=69284d70&is=6926fbf0&hm=2c6175c8c52625b4ae1b783a7720e9c0c21c8ef4731b2145c9b140b8c1e6670f&	f
-6	3	Chocolate Cake	Rich chocolate cake with chocolate frosting	59.99	https://cdn.discordapp.com/attachments/1443219005447082017/1443227059974574151/choco_cake.jpg?ex=69284d70&is=6926fbf0&hm=03cc9412ad3fe4ef7e34aa6a8e77514d633991dd6f4408a179239c5016d55f01&	t
-7	3	Tiramisu	Classic Italian coffee-flavored dessert	64.99	https://cdn.discordapp.com/attachments/1443219005447082017/1443219431613272084/tiramisu.jpg?ex=69284656&is=6926f4d6&hm=113ef823fabfb2ddaecede0cbb97b04fd6b2cbd317b360fae75d7a65c9f2a704&	t
+1	1	Margherita Pizza	Classic pizza with tomato sauce, mozzarella, and basil	89.99	https://images.pexels.com/photos/35068608/pexels-photo-35068608.jpeg	t
+2	1	Pepperoni Pizza	Pizza topped with pepperoni slices and cheese	109.99	https://images.pexels.com/photos/708587/pexels-photo-708587.jpeg	t
+3	1	Vegetarian Pizza	Loaded with fresh vegetables and cheese	99.99	https://images.pexels.com/photos/35123983/pexels-photo-35123983.jpeg	t
+4	2	Cheese Burger	Double beef patty with melted cheese	94.99	https://images.pexels.com/photos/1199957/pexels-photo-1199957.jpeg	t
+5	2	Chicken Burger	Grilled chicken breast with mayo and lettuce	84.99	https://images.pexels.com/photos/1431305/pexels-photo-1431305.jpeg	f
+6	3	Chocolate Cake	Rich chocolate cake with chocolate frosting	59.99	https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg	t
+7	3	Tiramisu	Classic Italian coffee-flavored dessert	64.99	https://images.pexels.com/photos/1707920/pexels-photo-1707920.jpeg	t
 \.
 
 

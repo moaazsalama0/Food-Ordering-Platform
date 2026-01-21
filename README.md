@@ -1,3 +1,8 @@
+![Node.js](https://img.shields.io/badge/Node.js-18.x-green?logo=node.js)
+![Express](https://img.shields.io/badge/Express.js-Backend-black?logo=express)
+![Vue.js](https://img.shields.io/badge/Vue.js-3-42b883?logo=vue.js)
+![Vite](https://img.shields.io/badge/Vite-Build%20Tool-646CFF?logo=vite)
+
 # Food Order Delivery System
 
 A full-stack web application for managing food orders with user authentication, menu management, shopping cart functionality, and payment processing.
